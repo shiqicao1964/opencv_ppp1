@@ -89,7 +89,7 @@ def calibrate_camera(allCorners,allIds,imsize):
 
 if __name__ == '__main__':
 
-    imagesFolder = "/home/shiqi/opencv/data/"
+    imagesFolder = "/home/ubuntu/opencv/data/"
     mtx = np.genfromtxt(imagesFolder+"calib_mtx_webcam.csv")
     dist = np.genfromtxt(imagesFolder+"calib_dist_webcam.csv")
     
@@ -97,29 +97,35 @@ if __name__ == '__main__':
     dictionary = cv2.aruco.Dictionary_get(cv2.aruco.DICT_6X6_250)
     parameters = cv2.aruco.DetectorParameters_create()
     color_list = []
+    length_of_axis = 0.01
+    
     for x in range(0, 260):
         color_list.append((random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+    
     while True:
         time.sleep(1/50)
         ret, frame = vid.read()
         markerCorners, markerIds, rejectedCandidates = cv2.aruco.detectMarkers(frame, dictionary, parameters=parameters)
-        color_frame (frame,markerCorners,markerIds,rejectedCandidates,color_list)
+        frame = color_frame (frame,markerCorners,markerIds,rejectedCandidates,color_list)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        cv2.imshow('frame', frame)
-        print('markerCorners:')
-        print(len(markerCorners))
+        rvec, tvec, markerPoints = aruco.estimatePoseSingleMarkers(markerCorners, 0.02, mtx,dist)
+        print('rvec', rvec)
+        print('tvec', tvec)
+        imaxis = frame
+        if tvec is not None:
+            imaxis = aruco.drawDetectedMarkers(frame.copy(), markerCorners, markerIds)
+            for K in range(len(tvec)):
+                imaxis = aruco.drawAxis(imaxis, mtx, dist, rvec[K], tvec[K], length_of_axis)
+
+        cv2.imshow('frame', imaxis)
+
         if markerIds is not None:
-            i = 0       
+            j = 0       
             for maker in markerIds:
-                p1 = np.squeeze(markerCorners[i])[0,:]
-                p2 = np.squeeze(markerCorners[i])[1,:]
-                p3 = np.squeeze(markerCorners[i])[2,:]
-                p4 = np.squeeze(markerCorners[i])[3,:]
-                print('maker :' ,maker)
-                print('markerCorners 1 ',np.squeeze(markerCorners[i])[0,:])
-                print('markerCorners 2 ',np.squeeze(markerCorners[i])[1,:])
-                print('markerCorners 3 ',np.squeeze(markerCorners[i])[2,:])
-                print('markerCorners 4 ',np.squeeze(markerCorners[i])[3,:])
-
-
+                p1 = np.squeeze(markerCorners[j])[0,:]
+                p2 = np.squeeze(markerCorners[j])[1,:]
+                p3 = np.squeeze(markerCorners[j])[2,:]
+                p4 = np.squeeze(markerCorners[j])[3,:]
+                j = j + 1
+        
